@@ -19,7 +19,7 @@ import scala.util.matching.Regex
 object TaskUtils {
 
   //TaskIdFormat: ct:JOB_NAME:DUE:ATTEMPT:ARGUMENTS
-  val taskIdTemplate = "ct:%d:%d:%s:%s"
+  val taskIdTemplate = "ct:%d:%d:%s"
   val argumentsPattern: Regex = """(.*)?""".r
   val taskIdPattern: Regex = """ct:(\d+):(\d+):%s:?%s""".format(JobUtils.jobNamePattern, argumentsPattern).r
   val commandInjectionFilter: Set[Any] = ";".toSet
@@ -32,7 +32,7 @@ object TaskUtils {
 
   def getTaskId(job: BaseJob, due: DateTime, attempt: Int = 0, arguments: Option[String] = None): String = {
     val args: String = arguments.getOrElse(job.arguments.mkString(" ")).filterNot(commandInjectionFilter)
-    taskIdTemplate.format(due.getMillis, attempt, job.name, args)
+    taskIdTemplate.format(due.getMillis, attempt, job.name)
   }
 
   def isValidVersion(taskIdString: String): Boolean = {
