@@ -120,6 +120,11 @@ class JobDeserializer extends JsonDeserializer[BaseJob] {
         node.get("lastError").asText
       else ""
 
+    val taskId =
+      if (node.has("taskId") && node.get("taskId") != null)
+        node.get("taskId").asText
+      else null
+      
     val cpus =
       if (node.has("cpus") && node.get("cpus") != null && node
             .get("cpus")
@@ -409,7 +414,8 @@ class JobDeserializer extends JsonDeserializer[BaseJob] {
         arguments = arguments,
         softError = softError,
         dataProcessingJobType = dataProcessingJobType,
-        constraints = constraints
+        constraints = constraints,
+        taskId = taskId
       )
     } else if (node.has("schedule")) {
       val scheduleTimeZone =
@@ -447,7 +453,8 @@ class JobDeserializer extends JsonDeserializer[BaseJob] {
         arguments = arguments,
         softError = softError,
         dataProcessingJobType = dataProcessingJobType,
-        constraints = constraints
+        constraints = constraints,
+        taskId = taskId
       )
     } else {
       /* schedule now */
@@ -481,7 +488,8 @@ class JobDeserializer extends JsonDeserializer[BaseJob] {
         arguments = arguments,
         softError = softError,
         dataProcessingJobType = dataProcessingJobType,
-        constraints = constraints
+        constraints = constraints,
+        taskId = taskId
       )
     }
   }

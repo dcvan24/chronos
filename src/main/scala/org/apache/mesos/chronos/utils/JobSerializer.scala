@@ -134,6 +134,9 @@ class JobSerializer extends JsonSerializer[BaseJob] {
 
     json.writeFieldName("runAsUser")
     json.writeString(baseJob.runAsUser)
+    
+    json.writeFieldName("taskId")
+    json.writeString(baseJob.taskId)
 
     json.writeFieldName("concurrent")
     json.writeBoolean(baseJob.concurrent)
