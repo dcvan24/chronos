@@ -165,6 +165,15 @@ class JobScheduler @Inject()(val taskManager: TaskManager,
       persistenceStore.persistJob(newJob)
     }
   }
+  
+  def updateJobTaskId(job: BaseJob, taskId: String) {
+    replaceJob(job, job match {
+      case job: ScheduleBasedJob => 
+        job.copy(taskId = taskId)
+      case job: DependencyBasedJob =>
+        job.copy(taskId = taskId)
+    })
+  }
 
   def handleLaunchedTask(job: BaseJob) {
     val newJob = getNewRunningJob(job)
@@ -173,6 +182,7 @@ class JobScheduler @Inject()(val taskManager: TaskManager,
 
   def handleStartedTask(taskStatus: TaskStatus) {
     val taskId = taskStatus.getTaskId.getValue
+    log.info("Task ID: " + taskId)
     if (!TaskUtils.isValidVersion(taskId)) {
       log.warning("Found old or invalid task, ignoring!")
       return
@@ -191,7 +201,7 @@ class JobScheduler @Inject()(val taskManager: TaskManager,
                    taskStatus,
                    attempt,
                    taskManager.getRunningTaskCount(jobName)))
-
+      updateJobTaskId(job, taskId)
       job match {
         case j: DependencyBasedJob =>
           jobGraph.resetDependencyInvocations(j.name)
@@ -254,7 +264,7 @@ class JobScheduler @Inject()(val taskManager: TaskManager,
                     taskManager.getRunningTaskCount(job.name)))
 
       val newJob = getNewSuccessfulJob(job)
-      replaceJob(job, newJob)
+      updateJobTaskId(newJob, taskId)
       processDependencies(jobName, taskDate)
 
       log.fine("Cleaning up finished task '%s'".format(taskId))
