@@ -147,17 +147,6 @@ class JobScheduler @Inject()(val taskManager: TaskManager,
 
     replaceJob(oldJob, newJob)
   }
-  
-  def updateJobTaskId(job: BaseJob, taskId: String) {
-    lock.synchronized {
-      jobGraph.replaceVertex(job, job match {
-        case job: ScheduleBasedJob => 
-          job.copy(taskId = taskId)
-        case job: DependencyBasedJob =>
-          job.copy(taskId = taskId)
-      })
-    }
-  }
 
   def replaceJob(oldJob: BaseJob, newJob: BaseJob) {
     lock.synchronized {
@@ -194,7 +183,6 @@ class JobScheduler @Inject()(val taskManager: TaskManager,
       log.warning("JobSchedule '%s' no longer registered.".format(jobName))
     } else {
       val job = jobOption.get
-      updateJobTaskId(job, taskId)
       val (_, _, attempt, _) = TaskUtils.parseTaskId(taskId)
       jobsObserver.apply(
         JobStarted(job,
@@ -256,7 +244,6 @@ class JobScheduler @Inject()(val taskManager: TaskManager,
         timeMs = DateTime.now(DateTimeZone.UTC).getMillis - start)
       jobMetrics.updateJobStatus(jobName, success = true)
       val job = jobOption.get
-      updateJobTaskId(job, taskId)
       jobsObserver.apply(
         JobFinished(job,
                     taskStatus,
@@ -264,7 +251,12 @@ class JobScheduler @Inject()(val taskManager: TaskManager,
                     taskManager.getRunningTaskCount(job.name)))
 
       val newJob = getNewSuccessfulJob(job)
-      updateJobTaskId(newJob, taskId)
+      replaceJob(job, newJob match {
+        case newJob: ScheduleBasedJob =>
+          newJob.copy(taskId = taskId)
+        case newJob: DependencyBasedJob => 
+          newJob.copy(taskId = taskId)
+      })
       processDependencies(jobName, taskDate)
 
       log.fine("Cleaning up finished task '%s'".format(taskId))
